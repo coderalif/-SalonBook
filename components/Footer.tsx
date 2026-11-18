@@ -108,7 +108,7 @@ export default function Footer() {
 
                 {/* কপিরাইট সেকশন */}
                 <div className="pt-8 mt-8 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 gap-4">
-                    <p>&copy; {new Date().getFullYear()} SalonBook Platform. All rights reserved.</p>
+                    <p>&copy; 2026 SalonBook Platform. All rights reserved.</p>
                     <p className="flex items-center gap-1">
                         Crafted with <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /> for your beauty and elegance
                     </p>
