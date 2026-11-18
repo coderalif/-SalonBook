@@ -1,36 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SalonBook - Client (Frontend Application)
 
-## Getting Started
+SalonBook is an intuitive, modern, role-based salon appointment booking platform built with **Next.js (App Router)**, **TypeScript**, **Tailwind CSS**, and **Stripe Checkout**. It enables clients to discover luxury beauty and wellness treatments, schedule appointments with conflict-free slot detection, and securely pay online, while offering administrators a complete dashboard for service management, appointment review, and customer moderation.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🔗 Project Links
+
+- **Live Website:** [https://salonbook-live.vercel.app](https://salonbook-live.vercel.app) *(Replace with your live deployment URL)*
+- **Client Repository:** [https://github.com/your-username/salonbook-client](https://github.com/your-username/salonbook-client)
+- **Server Repository:** [https://github.com/your-username/salonbook-server](https://github.com/your-username/salonbook-server)
+
+---
+
+## 🌟 Key Features
+
+### 👤 Customer Features
+- **Public Service Catalog:** Browse active salon services categorized by Haircut & Styling, Hair Coloring, Hair Treatment, Facial, Makeup, Manicure & Pedicure, and Spa & Massage.
+- **Search & Filter:** Real-time search by service name, category filtering tabs, and price sorting (low to high, high to low).
+- **Appointment Scheduling:** Book appointments on `/services/[id]` with conflict prevention for same-date and same-time slots.
+- **Customer Dashboard:**
+  - Overview with booking metrics (Total, Pending, Confirmed, Cancelled).
+  - My Appointments list with live status indicators.
+  - Cancel pending bookings directly.
+  - Instant Stripe Checkout integration for confirmed appointments.
+  - Profile management with ImgBB avatar upload and phone contact updates.
+
+### 🛡️ Administrator Features
+- **Admin Dashboard Console:** Analytics overview covering total customers, active services, appointments, and gross revenue.
+- **Manage Services (CRUD):** Add new treatments with ImgBB photo upload, edit prices and duration, toggle active/inactive visibility, and delete services.
+- **Manage Appointments:** Review all customer requests, confirm pending appointments, or cancel sessions.
+- **User Moderation:** Audit registered customer accounts and toggle instant block/unblock access.
+- **Audit-Safe Transactions:** View verified Stripe transaction history with session IDs and payment timestamps.
+
+---
+
+## 🛠️ Technology Stack
+
+- **Framework:** Next.js (App Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS
+- **Icons:** Lucide React
+- **Notifications:** React Hot Toast
+- **Payment Gateway:** Stripe Checkout Client
+- **Image Hosting:** ImgBB API
+
+---
+
+## ⚙️ Required Environment Variables
+
+Create a `.env.local` file in the root of the `client/` folder:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+NEXT_PUBLIC_IMGBB_API_KEY=...
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+*(Refer to `.env.example` for details. Never push secret credentials to GitHub.)*
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 💻 Local Installation & Setup
 
-## Learn More
+1. **Clone the repository:**
+   ```bash
+   git clone <client-repo-url>
+   cd client
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. **Set up Environment Variables:**
+   ```bash
+   cp .env.example .env.local
+   # Update NEXT_PUBLIC_API_URL with your local or deployed backend URL
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4. **Run Development Server:**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Deploy on Vercel
+5. **Build for Production:**
+   ```bash
+   npm run build
+   npm start
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔐 Demo Credentials for Evaluation
+
+- **Administrator Account:**
+  - **Email:** `admin@salonbook.com`
+  - **Password:** `Admin@123`
+- **Customer Account:**
+  - **Email:** `customer@example.com`
+  - **Password:** `Customer@123`
