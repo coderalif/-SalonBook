@@ -10,6 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { uploadImageToImgBB } from '@/lib/api';
 import { Sparkles, User as UserIcon, Mail, Lock, Image as ImageIcon, UserPlus, Loader2, Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import GoogleAuthModal from '@/components/GoogleAuthModal';
 
 export default function SignUpPage() {
     const { register, googleLogin, loading } = useAuth();
@@ -19,6 +20,7 @@ export default function SignUpPage() {
     const [imageUrl, setImageUrl] = useState('');
     const [uploadingImage, setUploadingImage] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
 
     // পাসওয়ার্ড ভ্যালিডেশন শর্তাবলী
     const hasMinLength = password.length >= 6;
@@ -33,7 +35,7 @@ export default function SignUpPage() {
 
         try {
             setUploadingImage(true);
-            toast.loading('Uploading profile image...', { id: 'img-upload' });
+            toast.loading('Uploading profile image to ImgBB...', { id: 'img-upload' });
             const uploadedUrl = await uploadImageToImgBB(file);
             setImageUrl(uploadedUrl);
             toast.success('Image uploaded successfully!', { id: 'img-upload' });
@@ -48,7 +50,6 @@ export default function SignUpPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // পাসওয়ার্ড শর্ত পরীক্ষা
         if (!isPasswordValid) {
             toast.error('Please fulfill all password requirements.');
             return;
@@ -59,15 +60,14 @@ export default function SignUpPage() {
         setIsSubmitting(false);
     };
 
-    // গুগল সাইনআপ হ্যান্ডলার
-    const handleGoogleSignUp = async () => {
+    // গুগল অ্যাকাউন্ট নির্বাচন হ্যান্ডলার
+    const handleGoogleSelect = async (selectedName: string, selectedEmail: string, selectedImage: string) => {
         setIsSubmitting(true);
-        const mockEmail = prompt('Enter your Google Email for sign up:', 'newuser@gmail.com');
-        if (mockEmail) {
-            const mockName = mockEmail.split('@')[0];
-            await googleLogin(mockName, mockEmail, 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200');
-        }
+        const success = await googleLogin(selectedName, selectedEmail, selectedImage);
         setIsSubmitting(false);
+        if (success) {
+            setIsGoogleModalOpen(false);
+        }
     };
 
     return (
@@ -164,10 +164,10 @@ export default function SignUpPage() {
                         </div>
                     </div>
 
-                    {/* প্রোফাইল ইমেজ (Upload বা URL) */}
+                    {/* প্রোফাইল ইমেজ */}
                     <div>
                         <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                            Profile Picture (Upload or URL)
+                            Profile Picture (Upload Image or URL)
                         </label>
                         <div className="flex items-center gap-3">
                             <div className="relative flex-grow">
@@ -230,7 +230,7 @@ export default function SignUpPage() {
 
                     <button
                         type="button"
-                        onClick={handleGoogleSignUp}
+                        onClick={() => setIsGoogleModalOpen(true)}
                         disabled={isSubmitting}
                         className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-all cursor-pointer"
                     >
@@ -263,6 +263,14 @@ export default function SignUpPage() {
                     </Link>
                 </div>
             </div>
+
+            {/* গুগল অথ সিলেক্টর মডাল */}
+            <GoogleAuthModal
+                isOpen={isGoogleModalOpen}
+                onClose={() => setIsGoogleModalOpen(false)}
+                onSelect={handleGoogleSelect}
+                isSubmitting={isSubmitting}
+            />
         </div>
     );
 }

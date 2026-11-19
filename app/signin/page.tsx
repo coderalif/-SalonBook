@@ -7,13 +7,15 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { Sparkles, Mail, Lock, LogIn, ArrowRight, Loader2 } from 'lucide-react';
+import { Sparkles, Mail, Lock, LogIn, Loader2 } from 'lucide-react';
+import GoogleAuthModal from '@/components/GoogleAuthModal';
 
 export default function SignInPage() {
     const { login, googleLogin, loading } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
 
     // ফর্ম সাবমিট হ্যান্ডলার
     const handleSubmit = async (e: React.FormEvent) => {
@@ -23,16 +25,14 @@ export default function SignInPage() {
         setIsSubmitting(false);
     };
 
-    // গুগল সাইনইন হ্যান্ডলার (ডেমো/সিমুলেশন)
-    const handleGoogleSignIn = async () => {
+    // গুগল অ্যাকাউন্ট নির্বাচন হ্যান্ডলার
+    const handleGoogleSelect = async (name: string, selectedEmail: string, image: string) => {
         setIsSubmitting(true);
-        // ব্যবহারকারীর সুবিধার জন্য গুগল লগইন প্রম্পট
-        const mockEmail = prompt('Enter your Google Email:', 'customer@gmail.com');
-        if (mockEmail) {
-            const mockName = mockEmail.split('@')[0];
-            await googleLogin(mockName, mockEmail, 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200');
-        }
+        const success = await googleLogin(name, selectedEmail, image);
         setIsSubmitting(false);
+        if (success) {
+            setIsGoogleModalOpen(false);
+        }
     };
 
     // ডেমো ক্রেডেনশিয়াল ফিল করার হেল্পার
@@ -132,10 +132,10 @@ export default function SignInPage() {
                         </div>
                     </div>
 
-                    {/* গুগল লগইন বাটন */}
+                    {/* গুগল লগইন বাটন (ওপেনস প্রফেশনাল গুগল সিলেক্টর) */}
                     <button
                         type="button"
-                        onClick={handleGoogleSignIn}
+                        onClick={() => setIsGoogleModalOpen(true)}
                         disabled={isSubmitting}
                         className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-all cursor-pointer"
                     >
@@ -161,21 +161,21 @@ export default function SignInPage() {
                     </button>
                 </form>
 
-                {/* ডেমো ক্রেডেনশিয়াল দ্রুত পরীক্ষার জন্য বাটন */}
+                {/* ডেমো ক্রেডেনশিয়াল ফিল হেল্পার */}
                 <div className="pt-4 border-t border-gray-100 text-center">
                     <p className="text-xs text-gray-500 mb-2">Quick Evaluation Demo Credentials:</p>
                     <div className="flex justify-center gap-2">
                         <button
                             type="button"
                             onClick={() => fillDemoCredentials('admin')}
-                            className="px-3 py-1.5 rounded-lg text-xs bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
+                            className="px-3 py-1.5 rounded-lg text-xs bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
                         >
                             Fill Admin
                         </button>
                         <button
                             type="button"
                             onClick={() => fillDemoCredentials('customer')}
-                            className="px-3 py-1.5 rounded-lg text-xs bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100 transition-colors"
+                            className="px-3 py-1.5 rounded-lg text-xs bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100 transition-colors cursor-pointer"
                         >
                             Fill Customer
                         </button>
@@ -190,6 +190,14 @@ export default function SignInPage() {
                     </Link>
                 </div>
             </div>
+
+            {/* গুগল অথ সিলেক্টর মডাল */}
+            <GoogleAuthModal
+                isOpen={isGoogleModalOpen}
+                onClose={() => setIsGoogleModalOpen(false)}
+                onSelect={handleGoogleSelect}
+                isSubmitting={isSubmitting}
+            />
         </div>
     );
 }
