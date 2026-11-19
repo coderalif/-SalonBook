@@ -6,7 +6,7 @@ SalonBook is an intuitive, modern, role-based salon appointment booking platform
 
 ## 🔗 Project Links
 
-- **Live Website:** [https://salonbook-live.vercel.app](https://salonbook-live.vercel.app) *(Replace with your live deployment URL)*
+- **Live Website:** [https://salon-book-omega.vercel.app](https://salon-book-omega.vercel.app)
 - **Client Repository:** [https://github.com/coderalif/-SalonBook](https://github.com/coderalif/-SalonBook)
 - **Server Repository:** [https://github.com/coderalif/-SalonBook-server](https://github.com/coderalif/-SalonBook-server)
 
