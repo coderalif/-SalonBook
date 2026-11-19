@@ -4,17 +4,35 @@
 // Navbar Component (Responsive Navigation with Role Support)
 // ========================================================
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Sparkles, Menu, X, User as UserIcon, LogOut, LayoutDashboard, Calendar, Scissors } from 'lucide-react';
+import { Sparkles, Menu, X, User as UserIcon, LogOut, LayoutDashboard, Calendar, ChevronDown } from 'lucide-react';
 
 export default function Navbar() {
     const { user, isAdmin, isCustomer, logout } = useAuth();
     const pathname = usePathname();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // বাইরে ক্লিক করলে ড্রপডাউন বন্ধ করার হ্যান্ডলার
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setDropdownOpen(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // রাউট পরিবর্তন হলে মোবাইল মেনু এবং ড্রপডাউন নিজে থেকেই বন্ধ হওয়া
+    useEffect(() => {
+        setMobileMenuOpen(false);
+        setDropdownOpen(false);
+    }, [pathname]);
 
     // অ্যাক্টিভ লিঙ্ক চেক করার ফাংশন
     const isActive = (path: string) => pathname === path;
@@ -83,10 +101,12 @@ export default function Navbar() {
                     {/* ডেক্সটপ অথেন্টিকেশন স্টেট (লগইন বনাম সাইনইন বাটন) */}
                     <div className="hidden md:flex items-center space-x-3">
                         {user ? (
-                            <div className="relative">
+                            <div className="relative" ref={dropdownRef}>
                                 {/* ইউজার প্রোফাইল বাটন ও ড্রপডাউন ট্রিগার */}
                                 <button
                                     onClick={() => setDropdownOpen(!dropdownOpen)}
+                                    aria-expanded={dropdownOpen}
+                                    aria-label="User profile menu"
                                     className="flex items-center gap-2 p-1.5 pr-3 rounded-full border border-rose-200 hover:border-rose-400 hover:shadow-sm transition-all focus:outline-none"
                                 >
                                     <img
@@ -98,19 +118,19 @@ export default function Navbar() {
                                         <p className="text-xs font-semibold text-gray-800 leading-tight">
                                             {user.name.split(' ')[0]}
                                         </p>
-                                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-medium ${
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
                                             isAdmin ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-700'
                                         }`}>
                                             {user.role}
                                         </span>
                                     </div>
+                                    <ChevronDown className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
                                 </button>
 
                                 {/* ড্রপডাউন মেনু */}
                                 {dropdownOpen && (
                                     <div
                                         className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2"
-                                        onMouseLeave={() => setDropdownOpen(false)}
                                     >
                                         <div className="px-4 py-2 border-b border-gray-100">
                                             <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
@@ -183,6 +203,8 @@ export default function Navbar() {
                     <div className="flex items-center md:hidden">
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            aria-label="Toggle navigation menu"
+                            aria-expanded={mobileMenuOpen}
                             className="p-2 rounded-lg text-gray-600 hover:text-rose-600 hover:bg-rose-50 focus:outline-none"
                         >
                             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -221,26 +243,39 @@ export default function Navbar() {
                                     alt={user.name}
                                     className="w-10 h-10 rounded-full object-cover border border-rose-200"
                                 />
-                                <div>
-                                    <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-                                    <p className="text-xs text-gray-500">{user.email}</p>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
+                                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
                                 </div>
                             </div>
 
                             <Link
                                 href={dashboardLink}
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-rose-50"
+                                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition-colors"
                             >
-                                📊 Dashboard ({user.role})
+                                <LayoutDashboard className="w-4 h-4 text-rose-500" />
+                                {isAdmin ? 'Admin Dashboard' : 'Customer Dashboard'}
                             </Link>
+
+                            {isCustomer && (
+                                <Link
+                                    href="/dashboard/customer/appointments"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                                >
+                                    <Calendar className="w-4 h-4 text-rose-500" />
+                                    My Bookings
+                                </Link>
+                            )}
 
                             <Link
                                 href={`${dashboardLink}/profile`}
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-rose-50"
+                                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition-colors"
                             >
-                                👤 My Profile
+                                <UserIcon className="w-4 h-4 text-rose-500" />
+                                My Profile
                             </Link>
 
                             <button
@@ -248,7 +283,7 @@ export default function Navbar() {
                                     setMobileMenuOpen(false);
                                     logout();
                                 }}
-                                className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
                             >
                                 <LogOut className="w-4 h-4" /> Log Out
                             </button>
@@ -258,14 +293,14 @@ export default function Navbar() {
                             <Link
                                 href="/signin"
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="text-center py-2.5 rounded-lg border border-rose-200 text-sm font-medium text-rose-600 hover:bg-rose-50"
+                                className="text-center py-2.5 rounded-lg border border-rose-200 text-sm font-medium text-rose-600 hover:bg-rose-50 transition-colors"
                             >
                                 Sign In
                             </Link>
                             <Link
                                 href="/signup"
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="text-center py-2.5 rounded-lg bg-rose-600 text-sm font-medium text-white hover:bg-rose-700"
+                                className="text-center py-2.5 rounded-lg bg-rose-600 text-sm font-medium text-white hover:bg-rose-700 transition-colors shadow-sm"
                             >
                                 Sign Up
                             </Link>
