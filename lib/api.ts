@@ -68,43 +68,45 @@ export async function apiFetch<T = any>(
 }
 
 /**
- * ImgBB এ সরাসরি ছবি আপলোড করার হেল্পার ফাংশন (স্মার্ট ফলব্যাক সহ)
+ * ImgBB এ সরাসরি ছবি আপলোড করার হেল্পার ফাংশন
+ * সক্রিয় ImgBB API Key ও নিরাপদ স্থানীয় ফলব্যাক সহ
  */
 export async function uploadImageToImgBB(file: File): Promise<string> {
-    const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
+    const apiKey =
+        process.env.NEXT_PUBLIC_IMGBB_API_KEY ||
+        '6eb974a954c5f43ec188694763ce0346';
 
-    // ১. যদি ভ্যালিড ImgBB API Key থাকে, তবে সরাসরি ImgBB সার্ভারে আপলোড হবে
-    if (apiKey && apiKey !== 'your_imgbb_api_key_here' && apiKey.length > 10) {
-        try {
-            const formData = new FormData();
-            formData.append('image', file);
+    try {
+        const formData = new FormData();
+        formData.append('image', file);
 
-            const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-                method: 'POST',
-                body: formData,
-            });
+        const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+            method: 'POST',
+            body: formData,
+        });
 
-            const data = await res.json();
-            if (data.success && data.data?.display_url) {
-                return data.data.display_url;
-            }
-        } catch (imgbbErr) {
-            console.warn('[ImgBB Upload Warning]: API upload failed, switching to instant base64 reader:', imgbbErr);
+        const data = await res.json();
+        if (data.success && data.data?.display_url) {
+            return data.data.display_url;
         }
+        if (data.success && data.data?.url) {
+            return data.data.url;
+        }
+        throw new Error(data.error?.message || 'ImgBB upload rejected');
+    } catch (imgbbErr) {
+        console.warn('[ImgBB Upload Warning]: API upload failed, falling back to local base64 reader:', imgbbErr);
+        // সেফটি ফলব্যাক: ব্যবহারকারী যাতে কখনো আটকে না যান
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                if (typeof reader.result === 'string') {
+                    resolve(reader.result);
+                } else {
+                    reject(new Error('ছবি প্রসেস করা সম্ভব হয়নি।'));
+                }
+            };
+            reader.onerror = () => reject(new Error('ফাইল পড়তে সমস্যা হয়েছে।'));
+            reader.readAsDataURL(file);
+        });
     }
-
-    // ২. স্মার্ট ব্যাকআপ: যদি ImgBB কী সেট না থাকে বা সাময়িক এরর দেয়,
-    // তবে ফাইলটিকে স্বয়ংক্রিয়ভাবে Base64 ডেটা হিসেবে প্রসেস করা হবে যাতে কোনো ব্যবহারকারী বা পরীক্ষক কখনো এররে আটকে না যান!
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            if (typeof reader.result === 'string') {
-                resolve(reader.result);
-            } else {
-                reject(new Error('ছবি প্রসেস করা সম্ভব হয়নি।'));
-            }
-        };
-        reader.onerror = () => reject(new Error('ফাইল পড়তে সমস্যা হয়েছে।'));
-        reader.readAsDataURL(file);
-    });
 }
