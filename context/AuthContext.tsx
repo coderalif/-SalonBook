@@ -90,8 +90,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                 toast.success('স্বাগতম! আপনি সফলভাবে লগইন করেছেন।');
 
-                // রোল অনুযায়ী সঠিক ড্যাশবোর্ডে রিডাইরেক্ট করা
-                if (res.user.role === 'admin') {
+                // যদি পূর্ববর্তী পেইজে রিডাইরেক্ট রিকোয়েস্ট থাকে (?redirect=...)
+                const redirectParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null;
+
+                if (redirectParam && res.user.role === 'customer') {
+                    router.push(redirectParam);
+                } else if (res.user.role === 'admin') {
                     router.push('/dashboard/admin');
                 } else {
                     router.push('/dashboard/customer');
@@ -125,7 +129,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 localStorage.setItem('salonbook_user', JSON.stringify(res.user));
 
                 toast.success('রেজিস্ট্রেশন সফল হয়েছে!');
-                router.push('/dashboard/customer');
+                const redirectParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null;
+                router.push(redirectParam || '/dashboard/customer');
                 return true;
             } else {
                 toast.error(res.message || 'রেজিস্ট্রেশন ব্যর্থ হয়েছে!');
@@ -155,7 +160,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 localStorage.setItem('salonbook_user', JSON.stringify(res.user));
 
                 toast.success('গুগল লগইন সফল হয়েছে!');
-                if (res.user.role === 'admin') {
+                const redirectParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null;
+
+                if (redirectParam && res.user.role === 'customer') {
+                    router.push(redirectParam);
+                } else if (res.user.role === 'admin') {
                     router.push('/dashboard/admin');
                 } else {
                     router.push('/dashboard/customer');

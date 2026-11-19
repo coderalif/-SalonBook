@@ -30,12 +30,19 @@ const TIME_SLOTS = [
 export default function ServiceDetailsPage() {
     const params = useParams();
     const router = useRouter();
-    const { user, isAdmin, isCustomer } = useAuth();
+    const { user, isAdmin, isCustomer, loading: authLoading } = useAuth();
     const serviceId = params?.id as string;
 
     const [service, setService] = useState<ServiceItem | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // রিকোয়ারমেন্ট: Salon Details Page (redirect to Sign In if unauthenticated)
+    useEffect(() => {
+        if (!authLoading && !user) {
+            router.replace(`/signin?redirect=/services/${serviceId}`);
+        }
+    }, [user, authLoading, serviceId, router]);
 
     // বুকিং ফর্ম স্টেট
     const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -143,15 +150,17 @@ export default function ServiceDetailsPage() {
                 </div>
 
                 {/* লোডিং অবস্থা */}
-                {loading && (
+                {(loading || authLoading || !user) && !error && (
                     <div className="bg-white rounded-3xl p-8 sm:p-12 shadow-sm border border-gray-100 flex flex-col items-center justify-center min-h-[400px]">
                         <Loader2 className="w-10 h-10 text-rose-500 animate-spin mb-4" />
-                        <p className="text-gray-500 text-sm font-medium">Loading service details...</p>
+                        <p className="text-gray-500 text-sm font-medium">
+                            {!user && !authLoading ? 'Redirecting to sign in...' : 'Loading service details...'}
+                        </p>
                     </div>
                 )}
 
                 {/* এরর অবস্থা (যেমন অবৈধ আইডি বা ডিলিট হওয়া সার্ভিস) */}
-                {!loading && error && (
+                {!loading && !authLoading && error && (
                     <div className="bg-white rounded-3xl p-12 shadow-sm border border-red-100 text-center max-w-lg mx-auto space-y-4">
                         <div className="w-14 h-14 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto">
                             <AlertCircle className="w-7 h-7" />
@@ -168,7 +177,7 @@ export default function ServiceDetailsPage() {
                 )}
 
                 {/* সার্ভিস বিস্তারিত বিবরণ কার্ড */}
-                {!loading && !error && service && (
+                {!loading && !authLoading && user && !error && service && (
                     <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
                             
