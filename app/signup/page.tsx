@@ -11,6 +11,7 @@ import { uploadImageToImgBB } from '@/lib/api';
 import { Sparkles, User as UserIcon, Mail, Lock, Image as ImageIcon, UserPlus, Loader2, Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import GoogleAuthModal from '@/components/GoogleAuthModal';
+import { requestGoogleLogin } from '@/lib/googleAuth';
 
 export default function SignUpPage() {
     const { register, googleLogin, loading } = useAuth();
@@ -60,7 +61,21 @@ export default function SignUpPage() {
         setIsSubmitting(false);
     };
 
-    // গুগল অ্যাকাউন্ট নির্বাচন হ্যান্ডলার
+    // সরাসরি গুগল পপআপ চালু করা অথবা মডাল খোলা
+    const handleGoogleSignUpClick = async () => {
+        try {
+            setIsSubmitting(true);
+            const profile = await requestGoogleLogin();
+            await googleLogin(profile.name, profile.email, profile.picture);
+        } catch (error: any) {
+            console.warn('Direct Google Popup failed/blocked, opening selector modal:', error);
+            setIsGoogleModalOpen(true);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // গুগল অ্যাকাউন্ট নির্বাচন হ্যান্ডলার (মডাল থেকে)
     const handleGoogleSelect = async (selectedName: string, selectedEmail: string, selectedImage: string) => {
         setIsSubmitting(true);
         const success = await googleLogin(selectedName, selectedEmail, selectedImage);
@@ -102,7 +117,7 @@ export default function SignUpPage() {
                                 required
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="Sarah Jenkins"
+                                placeholder="e.g. Ayesha Rahman"
                                 className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all bg-gray-50/50 hover:bg-white"
                             />
                         </div>
@@ -122,7 +137,7 @@ export default function SignUpPage() {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="sarah@example.com"
+                                placeholder="you@example.com"
                                 className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all bg-gray-50/50 hover:bg-white"
                             />
                         </div>
@@ -142,34 +157,53 @@ export default function SignUpPage() {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••"
+                                placeholder="Create a strong password"
                                 className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all bg-gray-50/50 hover:bg-white"
                             />
                         </div>
 
-                        {/* পাসওয়ার্ড শর্ত প্রদর্শন */}
-                        <div className="mt-2 space-y-1 text-xs">
-                            <div className={`flex items-center gap-1.5 ${hasMinLength ? 'text-emerald-600' : 'text-gray-400'}`}>
-                                {hasMinLength ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                                <span>At least 6 characters</span>
+                        {/* পাসওয়ার্ড রিকোয়ারমেন্টস চেকলিস্ট */}
+                        <div className="mt-2.5 p-3 rounded-xl bg-gray-50/80 border border-gray-100 space-y-1.5 text-xs">
+                            <p className="font-semibold text-gray-500 text-[11px] uppercase tracking-wider">Password Requirements:</p>
+                            <div className="flex items-center gap-2 text-gray-600">
+                                {hasMinLength ? (
+                                    <Check className="w-3.5 h-3.5 text-emerald-600 font-bold" />
+                                ) : (
+                                    <X className="w-3.5 h-3.5 text-gray-300" />
+                                )}
+                                <span className={hasMinLength ? 'text-emerald-700 font-medium' : ''}>
+                                    At least 6 characters
+                                </span>
                             </div>
-                            <div className={`flex items-center gap-1.5 ${hasUppercase ? 'text-emerald-600' : 'text-gray-400'}`}>
-                                {hasUppercase ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                                <span>At least one uppercase letter (A-Z)</span>
+                            <div className="flex items-center gap-2 text-gray-600">
+                                {hasUppercase ? (
+                                    <Check className="w-3.5 h-3.5 text-emerald-600 font-bold" />
+                                ) : (
+                                    <X className="w-3.5 h-3.5 text-gray-300" />
+                                )}
+                                <span className={hasUppercase ? 'text-emerald-700 font-medium' : ''}>
+                                    At least 1 uppercase letter (A-Z)
+                                </span>
                             </div>
-                            <div className={`flex items-center gap-1.5 ${hasLowercase ? 'text-emerald-600' : 'text-gray-400'}`}>
-                                {hasLowercase ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                                <span>At least one lowercase letter (a-z)</span>
+                            <div className="flex items-center gap-2 text-gray-600">
+                                {hasLowercase ? (
+                                    <Check className="w-3.5 h-3.5 text-emerald-600 font-bold" />
+                                ) : (
+                                    <X className="w-3.5 h-3.5 text-gray-300" />
+                                )}
+                                <span className={hasLowercase ? 'text-emerald-700 font-medium' : ''}>
+                                    At least 1 lowercase letter (a-z)
+                                </span>
                             </div>
                         </div>
                     </div>
 
-                    {/* প্রোফাইল ইমেজ */}
+                    {/* প্রোফাইল ইমেজ (ঐচ্ছিক - ImgBB আপলোড) */}
                     <div>
                         <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                            Profile Picture (Upload Image or URL)
+                            Profile Picture (Optional)
                         </label>
-                        <div className="flex items-center gap-3">
+                        <div className="flex gap-2">
                             <div className="relative flex-grow">
                                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
                                     <ImageIcon className="w-5 h-5" />
@@ -178,12 +212,12 @@ export default function SignUpPage() {
                                     type="url"
                                     value={imageUrl}
                                     onChange={(e) => setImageUrl(e.target.value)}
-                                    placeholder="https://example.com/avatar.jpg"
-                                    className="block w-full pl-11 pr-4 py-2.5 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-rose-500"
+                                    placeholder="Image URL or upload a file..."
+                                    className="block w-full pl-11 pr-4 py-2.5 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-rose-500 bg-gray-50/50"
                                 />
                             </div>
-                            <label className="cursor-pointer px-3 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-medium transition-colors shrink-0">
-                                {uploadingImage ? 'Uploading...' : 'Upload'}
+                            <label className="flex items-center justify-center px-4 py-2.5 border border-rose-200 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors cursor-pointer shrink-0">
+                                <span>Upload</span>
                                 <input
                                     type="file"
                                     accept="image/*"
@@ -230,7 +264,7 @@ export default function SignUpPage() {
 
                     <button
                         type="button"
-                        onClick={() => setIsGoogleModalOpen(true)}
+                        onClick={handleGoogleSignUpClick}
                         disabled={isSubmitting}
                         className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-all cursor-pointer"
                     >

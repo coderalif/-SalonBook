@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { Sparkles, Mail, Lock, LogIn, Loader2 } from 'lucide-react';
 import GoogleAuthModal from '@/components/GoogleAuthModal';
+import { requestGoogleLogin } from '@/lib/googleAuth';
 
 export default function SignInPage() {
     const { login, googleLogin, loading } = useAuth();
@@ -25,7 +26,21 @@ export default function SignInPage() {
         setIsSubmitting(false);
     };
 
-    // গুগল অ্যাকাউন্ট নির্বাচন হ্যান্ডলার
+    // সরাসরি গুগল পপআপ চালু করা অথবা মডাল খোলা
+    const handleGoogleSignInClick = async () => {
+        try {
+            setIsSubmitting(true);
+            const profile = await requestGoogleLogin();
+            await googleLogin(profile.name, profile.email, profile.picture);
+        } catch (error: any) {
+            console.warn('Direct Google Popup failed/blocked, opening selector modal:', error);
+            setIsGoogleModalOpen(true);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // গুগল অ্যাকাউন্ট নির্বাচন হ্যান্ডলার (মডাল থেকে)
     const handleGoogleSelect = async (name: string, selectedEmail: string, image: string) => {
         setIsSubmitting(true);
         const success = await googleLogin(name, selectedEmail, image);
@@ -132,10 +147,10 @@ export default function SignInPage() {
                         </div>
                     </div>
 
-                    {/* গুগল লগইন বাটন (ওপেনস প্রফেশনাল গুগল সিলেক্টর) */}
+                    {/* গুগল লগইন বাটন (অফিশিয়াল GIS পপআপ ও সিলেক্টর) */}
                     <button
                         type="button"
-                        onClick={() => setIsGoogleModalOpen(true)}
+                        onClick={handleGoogleSignInClick}
                         disabled={isSubmitting}
                         className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-all cursor-pointer"
                     >

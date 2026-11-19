@@ -1,11 +1,13 @@
 'use client';
 
 // ========================================================
-// Google Auth Modal (প্রফেশনাল গুগল একাউন্ট সিলেক্টর)
+// Google Auth Modal (অফিশিয়াল গুগল লগইন ও অ্যাকাউন্ট সিলেক্টর)
 // ========================================================
 
 import React, { useState } from 'react';
-import { X, User, Plus, Loader2 } from 'lucide-react';
+import { X, Plus, Loader2, Sparkles } from 'lucide-react';
+import { requestGoogleLogin } from '@/lib/googleAuth';
+import toast from 'react-hot-toast';
 
 interface GoogleAuthModalProps {
     isOpen: boolean;
@@ -22,6 +24,7 @@ export default function GoogleAuthModal({
 }: GoogleAuthModalProps) {
     const [customEmail, setCustomEmail] = useState('');
     const [showCustomInput, setShowCustomInput] = useState(false);
+    const [isPopupLoading, setIsPopupLoading] = useState(false);
 
     if (!isOpen) return null;
 
@@ -38,6 +41,20 @@ export default function GoogleAuthModal({
             image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
         },
     ];
+
+    // অফিশিয়াল গুগল পপআপ চালু করা
+    const handleOfficialGooglePopup = async () => {
+        try {
+            setIsPopupLoading(true);
+            const profile = await requestGoogleLogin();
+            await onSelect(profile.name, profile.email, profile.picture || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150');
+        } catch (err: any) {
+            console.error('Google Popup Error:', err);
+            toast.error(err.message || 'Google Sign-In was cancelled or failed.');
+        } finally {
+            setIsPopupLoading(false);
+        }
+    };
 
     const handleCustomSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -58,7 +75,7 @@ export default function GoogleAuthModal({
                 {/* ক্লোজ বাটন */}
                 <button
                     onClick={onClose}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isPopupLoading}
                     className="absolute top-5 right-5 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                 >
                     <X className="w-5 h-5" />
@@ -86,48 +103,67 @@ export default function GoogleAuthModal({
                             />
                         </svg>
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">Choose a Google Account</h3>
+                    <h3 className="text-lg font-bold text-gray-900">Sign In with Google</h3>
                     <p className="text-xs text-gray-500">to continue to <strong>SalonBook Platform</strong></p>
                 </div>
 
-                {isSubmitting ? (
+                {isSubmitting || isPopupLoading ? (
                     <div className="py-10 text-center space-y-3">
                         <Loader2 className="w-8 h-8 text-rose-600 animate-spin mx-auto" />
                         <p className="text-xs text-gray-500 font-medium">Authenticating with Google...</p>
                     </div>
                 ) : (
-                    <div className="space-y-2">
-                        {/* ওয়ান-ক্লিক অ্যাকাউন্ট লিস্ট */}
+                    <div className="space-y-2.5">
+                        {/* ১. অফিশিয়াল গুগল পপআপ বাটন */}
+                        <button
+                            type="button"
+                            onClick={handleOfficialGooglePopup}
+                            className="w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl bg-blue-50/70 hover:bg-blue-100/70 border border-blue-200 text-blue-700 font-semibold text-xs transition-all shadow-sm cursor-pointer"
+                        >
+                            <Sparkles className="w-4 h-4 text-blue-600" />
+                            Launch Official Google Popup
+                        </button>
+
+                        <div className="relative my-2">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-gray-100" />
+                            </div>
+                            <div className="relative flex justify-center text-[10px] uppercase">
+                                <span className="bg-white px-2 text-gray-400">or quick select</span>
+                            </div>
+                        </div>
+
+                        {/* ২. ওয়ান-ক্লিক অ্যাকাউন্ট লিস্ট */}
                         {presetAccounts.map((acc, i) => (
                             <button
                                 key={i}
                                 onClick={() => onSelect(acc.name, acc.email, acc.image)}
-                                className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-rose-50/70 border border-transparent hover:border-rose-100 transition-all text-left cursor-pointer group"
+                                className="w-full flex items-center gap-3 p-2.5 rounded-2xl hover:bg-rose-50/70 border border-transparent hover:border-rose-100 transition-all text-left cursor-pointer group"
                             >
                                 <img
                                     src={acc.image}
                                     alt={acc.name}
-                                    className="w-10 h-10 rounded-full object-cover border"
+                                    className="w-9 h-9 rounded-full object-cover border"
                                 />
                                 <div className="overflow-hidden">
-                                    <p className="text-sm font-bold text-gray-900 group-hover:text-rose-600 truncate">{acc.name}</p>
-                                    <p className="text-xs text-gray-400 truncate">{acc.email}</p>
+                                    <p className="text-xs font-bold text-gray-900 group-hover:text-rose-600 truncate">{acc.name}</p>
+                                    <p className="text-[11px] text-gray-400 truncate">{acc.email}</p>
                                 </div>
                             </button>
                         ))}
 
-                        {/* অন্য অ্যাকাউন্ট ব্যবহারের অপশন */}
+                        {/* ৩. অন্য অ্যাকাউন্ট ব্যবহারের অপশন */}
                         {!showCustomInput ? (
                             <button
                                 onClick={() => setShowCustomInput(true)}
-                                className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 border border-transparent transition-all text-left cursor-pointer text-gray-600"
+                                className="w-full flex items-center gap-3 p-2.5 rounded-2xl hover:bg-gray-50 border border-transparent transition-all text-left cursor-pointer text-gray-600"
                             >
-                                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
-                                    <Plus className="w-5 h-5" />
+                                <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                                    <Plus className="w-4 h-4" />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-semibold text-gray-700">Use another Google account</p>
-                                    <p className="text-[11px] text-gray-400">Enter custom email address</p>
+                                    <p className="text-xs font-semibold text-gray-700">Enter custom Gmail</p>
+                                    <p className="text-[10px] text-gray-400">Test with any email address</p>
                                 </div>
                             </button>
                         ) : (
@@ -161,9 +197,9 @@ export default function GoogleAuthModal({
                     </div>
                 )}
 
-                <div className="pt-5 mt-4 border-t border-gray-100 text-center">
+                <div className="pt-4 mt-3 border-t border-gray-100 text-center">
                     <p className="text-[10px] text-gray-400">
-                        To continue, Google will share your name, email address, and profile picture with SalonBook.
+                        OAuth 2.0 Client ID: 299610781439...retko186
                     </p>
                 </div>
 

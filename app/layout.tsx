@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
@@ -17,6 +18,13 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en" className="h-full antialiased">
+            <head>
+                {/* Google Identity Services (GIS) SDK */}
+                <Script
+                    src="https://accounts.google.com/gsi/client"
+                    strategy="afterInteractive"
+                />
+            </head>
             <body className="min-h-full flex flex-col bg-slate-50/50 text-gray-900 font-sans">
                 <AuthProvider>
                     {/* টোস্ট নোটিফিকেশন কন্টেইনার */}
