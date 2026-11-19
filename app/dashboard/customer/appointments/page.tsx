@@ -105,8 +105,18 @@ export default function MyAppointmentsPage() {
             });
 
             if (res.success && res.url) {
-                // স্ট্রাইপ পেমেন্ট পেজে রিডাইরেক্ট
-                window.location.href = res.url;
+                // ব্রাউজারের বর্তমান হোস্টের সাথে সিঙ্ক করা
+                let targetUrl = res.url;
+                try {
+                    const parsed = new URL(res.url);
+                    if (parsed.pathname.startsWith('/payment/')) {
+                        targetUrl = `${window.location.origin}${parsed.pathname}${parsed.search}`;
+                    }
+                } catch (e) {
+                    // retain original url
+                }
+                toast.success('Redirecting to payment checkout...', { id: 'stripe-pay' });
+                window.location.href = targetUrl;
             } else {
                 toast.error(res.message || 'Unable to initiate payment.', { id: 'stripe-pay' });
             }
@@ -236,9 +246,14 @@ export default function MyAppointmentsPage() {
 
                                 {/* স্ট্যাটাস ও অ্যাকশন বাটনসমূহ */}
                                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 border-t md:border-t-0 pt-4 md:pt-0">
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex flex-wrap items-center gap-2">
                                         {renderStatusBadge(item.status)}
                                         {renderPaymentBadge(item.paymentStatus)}
+                                        {item.status === 'pending' && (
+                                            <span className="text-[11px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                                                Admin approval needed to Pay
+                                            </span>
+                                        )}
                                     </div>
 
                                     <div className="flex items-center gap-2">
