@@ -18,14 +18,13 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en" className="h-full antialiased">
-            <head>
-                {/* Google Identity Services (GIS) SDK */}
+            <body className="min-h-full flex flex-col bg-slate-50/50 text-gray-900 font-sans">
+                {/* Official Google Identity Services SDK */}
                 <Script
                     src="https://accounts.google.com/gsi/client"
-                    strategy="afterInteractive"
+                    strategy="lazyOnload"
+                    id="google-gsi-client"
                 />
-            </head>
-            <body className="min-h-full flex flex-col bg-slate-50/50 text-gray-900 font-sans">
                 <AuthProvider>
                     {/* টোস্ট নোটিফিকেশন কন্টেইনার */}
                     <Toaster

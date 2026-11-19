@@ -1,6 +1,5 @@
 // ========================================================
 // Official Google Identity Services (GIS) OAuth Helper
-// Google Cloud OAuth 2.0 Integration
 // ========================================================
 
 export interface GoogleUserProfile {
@@ -10,15 +9,46 @@ export interface GoogleUserProfile {
 }
 
 /**
- * Triggers official Google OAuth 2.0 Identity Services popup
- * and fetches the verified user profile information.
+ * Ensures Google Identity Services script (gsi/client) is loaded
  */
-export const requestGoogleLogin = (): Promise<GoogleUserProfile> => {
+export const loadGoogleScript = (): Promise<void> => {
     return new Promise((resolve, reject) => {
         if (typeof window === 'undefined') {
-            return reject(new Error('Browser window environment is not available.'));
+            return resolve();
         }
 
+        if ((window as any).google?.accounts?.oauth2) {
+            return resolve();
+        }
+
+        const existingScript = document.getElementById('google-gsi-client');
+        if (existingScript) {
+            if ((window as any).google?.accounts?.oauth2) {
+                return resolve();
+            }
+            existingScript.addEventListener('load', () => resolve());
+            existingScript.addEventListener('error', () => reject(new Error('Failed to load Google SDK')));
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.id = 'google-gsi-client';
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        script.defer = true;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Could not connect to Google services. Please check your internet connection.'));
+        document.body.appendChild(script);
+    });
+};
+
+/**
+ * Triggers official Google OAuth 2.0 popup
+ */
+export const requestGoogleLogin = async (): Promise<GoogleUserProfile> => {
+    await loadGoogleScript();
+
+    return new Promise((resolve, reject) => {
         const clientId =
             process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
             '299610781439-9o99fcrg37ej9e1vvdnmmfn1retko186.apps.googleusercontent.com';
@@ -26,11 +56,7 @@ export const requestGoogleLogin = (): Promise<GoogleUserProfile> => {
         const google = (window as any).google;
 
         if (!google || !google.accounts || !google.accounts.oauth2) {
-            return reject(
-                new Error(
-                    'Google Identity Services is initializing. Please wait a moment and try again.'
-                )
-            );
+            return reject(new Error('Google Identity Services could not be loaded. Please refresh the page.'));
         }
 
         try {
@@ -44,11 +70,10 @@ export const requestGoogleLogin = (): Promise<GoogleUserProfile> => {
                     }
 
                     if (!tokenResponse.access_token) {
-                        return reject(new Error('Did not receive access token from Google.'));
+                        return reject(new Error('No access token received from Google.'));
                     }
 
                     try {
-                        // Google OAuth2 UserInfo API call
                         const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                             headers: {
                                 Authorization: `Bearer ${tokenResponse.access_token}`,
@@ -71,7 +96,7 @@ export const requestGoogleLogin = (): Promise<GoogleUserProfile> => {
                     }
                 },
                 error_callback: (err: any) => {
-                    reject(new Error(err?.message || 'Google OAuth prompt was cancelled or closed.'));
+                    reject(new Error(err?.message || 'Google Sign-In popup was closed.'));
                 },
             });
 
