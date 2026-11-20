@@ -362,7 +362,7 @@ export default function ServiceDetailsPage() {
                                                 <Loader2 className="w-4 h-4 animate-spin" /> Submitting...
                                             </>
                                         ) : (
-                                            'Confirm Request'
+                                            'Submit Booking Request'
                                         )}
                                     </button>
                                 </div>
